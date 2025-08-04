@@ -11,7 +11,16 @@ export default function CO2Calculator() {
     frequency: 'daily'
   });
 
-  const [result, setResult] = useState(null);
+  interface CalculationResult {
+    daily: number;
+    annual: number;
+    savings: number;
+    treesEquivalent: number;
+    costSavings: number;
+    mode: string;
+  }
+
+  const [result, setResult] = useState<CalculationResult | null>(null);
 
   const transportModes = [
     { value: 'car', label: 'Private Car', icon: 'ri-car-line', emissions: 0.21 },
@@ -33,7 +42,7 @@ export default function CO2Calculator() {
     
     // Adjust for fuel type if car
     if (formData.transportMode === 'car') {
-      const fuelMultipliers = {
+      const fuelMultipliers: { [key: string]: number } = {
         'petrol': 1.0,
         'diesel': 1.15,
         'hybrid': 0.6,
@@ -45,7 +54,7 @@ export default function CO2Calculator() {
 
     const dailyEmissions = distance * emissionFactor * 2; // Round trip
     
-    const frequencyMultipliers = {
+    const frequencyMultipliers: { [key: string]: number } = {
       'daily': 365,
       'weekly': 52,
       'monthly': 12,

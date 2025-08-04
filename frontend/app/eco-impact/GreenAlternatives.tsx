@@ -5,7 +5,23 @@ import { useState } from 'react';
 export default function GreenAlternatives() {
   const [selectedRoute, setSelectedRoute] = useState('cbd-to-suburbs');
 
-  const routes = {
+  interface Alternative {
+    mode: string;
+    icon: string;
+    co2: string;
+    cost: string;
+    time: string;
+    color: string;
+    pros: string[];
+    cons: string[];
+  }
+
+  interface Route {
+    title: string;
+    alternatives: Alternative[];
+  }
+
+  const routes: { [key: string]: Route } = {
     'cbd-to-suburbs': {
       title: 'CBD to Suburbs (15km)',
       alternatives: [
@@ -99,7 +115,7 @@ export default function GreenAlternatives() {
   };
 
   const getColorClasses = (color: string) => {
-    const colors = {
+    const colors: { [key: string]: string } = {
       red: 'bg-red-50 border-red-200 text-red-700',
       blue: 'bg-blue-50 border-blue-200 text-blue-700',
       green: 'bg-green-50 border-green-200 text-green-700',

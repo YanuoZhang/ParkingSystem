@@ -44,7 +44,7 @@ export default function EcoImpactPage() {
   ];
 
   const getStatColor = (color: string) => {
-    const colors = {
+    const colors: { [key: string]: string } = {
       green: 'bg-green-100 text-green-600',
       blue: 'bg-blue-100 text-blue-600',
       orange: 'bg-orange-100 text-orange-600',

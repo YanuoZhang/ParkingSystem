@@ -2,98 +2,62 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiService, ParkingSpot } from '@/services/api';
 
-interface ParkingSpot {
-  id: string;
-  name: string;
-  address: string;
-  price: string;
-  available: number;
-  total: number;
+interface ParkingSpotDisplay extends ParkingSpot {
   distance: string;
-  coordinates: [number, number];
-  type: string;
+  walkTime: string;
   prediction: string;
 }
-
-const mockParkingSpots: ParkingSpot[] = [
-  {
-    id: '1',
-    name: 'Collins Street Parking',
-    address: '123 Collins Street',
-    price: '$8/hour',
-    available: 45,
-    total: 120,
-    distance: '0.2km',
-    coordinates: [-37.8136, 144.9631],
-    type: 'street',
-    prediction: 'filling-fast'
-  },
-  {
-    id: '2',
-    name: 'Bourke Street Mall Garage',
-    address: '456 Bourke Street',
-    price: '$12/hour',
-    available: 23,
-    total: 200,
-    distance: '0.4km',
-    coordinates: [-37.8140, 144.9633],
-    type: 'garage',
-    prediction: 'stable'
-  },
-  {
-    id: '3',
-    name: 'Flinders Lane Parking',
-    address: '789 Flinders Lane',
-    price: '$6/hour',
-    available: 67,
-    total: 80,
-    distance: '0.3km',
-    coordinates: [-37.8159, 144.9669],
-    type: 'street',
-    prediction: 'available'
-  },
-  {
-    id: '4',
-    name: 'Queen Street Complex',
-    address: '321 Queen Street',
-    price: '$10/hour',
-    available: 12,
-    total: 150,
-    distance: '0.5km',
-    coordinates: [-37.8118, 144.9648],
-    type: 'garage',
-    prediction: 'limited'
-  },
-  {
-    id: '5',
-    name: 'Swanston Street Parking',
-    address: '654 Swanston Street',
-    price: '$7/hour',
-    available: 89,
-    total: 100,
-    distance: '0.6km',
-    coordinates: [-37.8102, 144.9628],
-    type: 'street',
-    prediction: 'available'
-  }
-];
 
 export default function ParkingMap({ filters, selectedSpot, onSpotSelect }: {
   filters: any;
   selectedSpot: any;
   onSpotSelect: (spot: any) => void;
 }) {
-  const [spots, setSpots] = useState(mockParkingSpots);
+  const [spots, setSpots] = useState<ParkingSpotDisplay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Load parking spots from API
+  useEffect(() => {
+    const loadParkingSpots = async () => {
+      try {
+        setLoading(true);
+        const parkingSpots = await apiService.getParkingSpots();
+        
+        // Transform API data to display format
+        const displaySpots: ParkingSpotDisplay[] = parkingSpots.map((spot, index) => ({
+          ...spot,
+          distance: `${(0.2 + index * 0.1).toFixed(1)}km`,
+          walkTime: `${2 + index} min`,
+          prediction: spot.availableSpots > spot.totalSpots * 0.5 ? 'available' :
+                    spot.availableSpots > spot.totalSpots * 0.2 ? 'filling-fast' : 'limited'
+        }));
+        
+        setSpots(displaySpots);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load parking spots');
+        console.error('Error loading parking spots:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadParkingSpots();
+  }, []);
+
+  // Real-time updates simulation
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
       // Simulate real-time updates
       setSpots(prevSpots => prevSpots.map(spot => ({
         ...spot,
-        available: Math.max(0, spot.available + Math.floor(Math.random() * 5 - 2))
+        availableSpots: Math.max(0, Math.min(spot.totalSpots, 
+          spot.availableSpots + Math.floor(Math.random() * 5 - 2)))
       })));
     }, 30000);
 
@@ -108,7 +72,7 @@ export default function ParkingMap({ filters, selectedSpot, onSpotSelect }: {
   };
 
   const getPredictionBadge = (prediction: string) => {
-    const badges = {
+    const badges: { [key: string]: string } = {
       'available': 'bg-green-100 text-green-800',
       'filling-fast': 'bg-orange-100 text-orange-800',
       'limited': 'bg-red-100 text-red-800',
@@ -116,6 +80,28 @@ export default function ParkingMap({ filters, selectedSpot, onSpotSelect }: {
     };
     return badges[prediction] || 'bg-gray-100 text-gray-800';
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-600">Loading parking spots...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="text-center text-red-600">
+          <i className="ri-error-warning-line text-2xl mb-2"></i>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm">
@@ -173,7 +159,7 @@ export default function ParkingMap({ filters, selectedSpot, onSpotSelect }: {
               onClick={() => onSpotSelect(spot)}
             >
               <div className={`w-4 h-4 rounded-full border-2 border-white shadow-lg ${
-                getAvailabilityColor(spot.available, spot.total)
+                getAvailabilityColor(spot.availableSpots, spot.totalSpots)
               }`}></div>
               
               {selectedSpot?.id === spot.id && (
@@ -192,13 +178,13 @@ export default function ParkingMap({ filters, selectedSpot, onSpotSelect }: {
                     <div>
                       <p className="text-xs text-gray-500">Available Spots</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {spot.available}/{spot.total}
+                        {spot.availableSpots}/{spot.totalSpots}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Price & Distance</p>
                       <p className="text-sm font-medium text-gray-900">
-                        {spot.price} • {spot.distance}
+                        ${spot.hourlyRate}/hour • {spot.distance}
                       </p>
                     </div>
                   </div>
@@ -225,18 +211,20 @@ export default function ParkingMap({ filters, selectedSpot, onSpotSelect }: {
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-2xl font-bold text-green-600">
-              {spots.reduce((sum, spot) => sum + spot.available, 0)}
+              {spots.reduce((sum, spot) => sum + spot.availableSpots, 0)}
             </p>
             <p className="text-sm text-gray-600">Available Spots</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-blue-600">
-              {spots.filter(spot => spot.available > 0).length}
+              {spots.filter(spot => spot.availableSpots > 0).length}
             </p>
             <p className="text-sm text-gray-600">Active Locations</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900">$8.5</p>
+            <p className="text-2xl font-bold text-gray-900">
+              ${(spots.reduce((sum, spot) => sum + spot.hourlyRate, 0) / spots.length).toFixed(1)}
+            </p>
             <p className="text-sm text-gray-600">Average Price/Hour</p>
           </div>
         </div>

@@ -1,26 +1,47 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import CarOwnershipChart from './CarOwnershipChart';
-import PopulationGrowthChart from './PopulationGrowthChart';
-import ParkingTrendsChart from './ParkingTrendsChart';
-import TrafficInsights from './TrafficInsights';
+import { apiService, Insight } from '@/services/api';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, AreaChart, Area } from 'recharts';
 
 export default function InsightsPage() {
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadInsights = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getInsights();
+        setInsights(data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load insights data');
+        console.error('Error loading insights:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInsights();
+  }, []);
+
   const keyStats = [
     {
       icon: 'ri-car-line',
-      value: '1.2M',
-      label: 'Registered Cars',
-      change: '+8.5%',
+      value: '2,810',
+      label: 'Total Parking Spots',
+      change: '+12.5%',
       trend: 'up'
     },
     {
       icon: 'ri-group-line',
-      value: '5.2M',
-      label: 'Melbourne Population',
-      change: '+12.3%',
+      value: '463',
+      label: 'Available Spots',
+      change: '+8.3%',
       trend: 'up'
     },
     {
@@ -32,12 +53,139 @@ export default function InsightsPage() {
     },
     {
       icon: 'ri-time-line',
-      value: '23min',
-      label: 'Avg Search Time',
-      change: '-15%',
+      value: '$8.9',
+      label: 'Avg Price/Hour',
+      change: '-2.1%',
       trend: 'down'
     }
   ];
+
+  const renderChart = (insight: Insight) => {
+    const data = insight.data.labels.map((label, index) => ({
+      name: label,
+      value: insight.data.values[index]
+    }));
+
+    const colors = insight.colors || ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+    switch (insight.type) {
+      case 'line':
+        return (
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="value" stroke={insight.color || "#3B82F6"} strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        );
+      
+      case 'pie':
+        return (
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        );
+      
+      case 'bar':
+        return (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill={insight.color || "#8B5CF6"} />
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      
+      case 'area':
+        return (
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Area type="monotone" dataKey="value" stroke={insight.color || "#10B981"} fill={insight.color || "#10B981"} fillOpacity={0.3} />
+            </AreaChart>
+          </ResponsiveContainer>
+        );
+      
+      case 'doughnut':
+        return (
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        );
+      
+      default:
+        return <div>Unsupported chart type</div>;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-600">Loading insights...</span>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center text-red-600">
+            <i className="ri-error-warning-line text-4xl mb-4"></i>
+            <p className="text-xl">{error}</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,7 +203,7 @@ export default function InsightsPage() {
             Melbourne Parking <span className="text-blue-400">Data Insights</span>
           </h1>
           <p className="text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed">
-            Analyze car ownership trends, population growth, and parking patterns to understand Melbourne's evolving transportation landscape.
+            Analyze parking patterns, usage trends, and pricing data to understand Melbourne's evolving transportation landscape.
           </p>
         </div>
       </section>
@@ -91,40 +239,16 @@ export default function InsightsPage() {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-8">
-            {/* Car Ownership Growth */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Car Ownership Growth Trends</h2>
-                <p className="text-gray-600">Track vehicle registration growth across Melbourne over the past decade</p>
+            {insights.map((insight) => (
+              <div key={insight.id} className="bg-white rounded-lg shadow-sm p-6">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{insight.title}</h2>
+                  <p className="text-gray-600">{insight.description}</p>
+                </div>
+                {renderChart(insight)}
               </div>
-              <CarOwnershipChart />
-            </div>
-
-            {/* Population Growth */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Melbourne CBD Population Growth</h2>
-                <p className="text-gray-600">Understand how population changes impact parking demand</p>
-              </div>
-              <PopulationGrowthChart />
-            </div>
-
-            {/* Parking Trends */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Historical Parking Trends</h2>
-                <p className="text-gray-600">Analyze peak hours and seasonal patterns in parking usage</p>
-              </div>
-              <ParkingTrendsChart />
-            </div>
+            ))}
           </div>
-        </div>
-      </section>
-
-      {/* Traffic Insights */}
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <TrafficInsights />
         </div>
       </section>
 

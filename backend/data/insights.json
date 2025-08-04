@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "title": "Peak Hours Analysis",
+    "description": "Most parking spots are occupied between 9 AM - 5 PM on weekdays",
+    "data": {
+      "labels": ["6AM", "9AM", "12PM", "3PM", "6PM", "9PM"],
+      "values": [20, 85, 90, 88, 75, 45]
+    },
+    "type": "line",
+    "color": "#3B82F6"
+  },
+  {
+    "id": 2,
+    "title": "Parking Spot Availability",
+    "description": "Current availability across all parking locations",
+    "data": {
+      "labels": ["Available", "Occupied"],
+      "values": [463, 2347]
+    },
+    "type": "pie",
+    "colors": ["#10B981", "#EF4444"]
+  },
+  {
+    "id": 3,
+    "title": "Average Hourly Rates",
+    "description": "Price comparison across different parking locations",
+    "data": {
+      "labels": ["Crown Casino", "South Wharf", "Melbourne Central", "QV Melbourne", "Federation Square", "Wilson Parking", "Emporium"],
+      "values": [6.50, 7.50, 8.50, 9.00, 10.00, 12.00, 11.00]
+    },
+    "type": "bar",
+    "color": "#8B5CF6"
+  },
+  {
+    "id": 4,
+    "title": "Weekly Usage Trends",
+    "description": "Parking usage patterns throughout the week",
+    "data": {
+      "labels": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      "values": [85, 88, 92, 90, 95, 70, 45]
+    },
+    "type": "line",
+    "color": "#F59E0B"
+  },
+  {
+    "id": 5,
+    "title": "Parking Features Distribution",
+    "description": "Distribution of parking features across all locations",
+    "data": {
+      "labels": ["Covered", "Security", "24/7 Access", "EV Charging", "Valet Service"],
+      "values": [6, 7, 3, 2, 2]
+    },
+    "type": "doughnut",
+    "colors": ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"]
+  },
+  {
+    "id": 6,
+    "title": "Monthly Revenue Analysis",
+    "description": "Revenue trends over the past 12 months",
+    "data": {
+      "labels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+      "values": [125000, 118000, 132000, 145000, 158000, 162000, 175000, 168000, 155000, 142000, 138000, 165000]
+    },
+    "type": "area",
+    "color": "#10B981"
+  }
+] 
