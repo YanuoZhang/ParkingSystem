@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { apiService, Insight } from '@/services/api';
+import PopulationGrowthChart from './PopulationGrowthChart';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, AreaChart, Area } from 'recharts';
 
 export default function InsightsPage() {
@@ -239,6 +240,15 @@ export default function InsightsPage() {
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-8">
+            {/* CBD Population Growth Chart */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">CBD Population Growth</h2>
+                <p className="text-gray-600">Track the population growth trends in Melbourne's Central Business District over the years.</p>
+              </div>
+              <PopulationGrowthChart />
+            </div>
+
             {insights.map((insight) => (
               <div key={insight.id} className="bg-white rounded-lg shadow-sm p-6">
                 <div className="mb-6">

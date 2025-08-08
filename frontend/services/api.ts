@@ -1,5 +1,4 @@
-const API_BASE_URL = 'http://localhost:5001/api';
-
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 export interface ParkingSpot {
   id: number;
   name: string;
@@ -30,6 +29,14 @@ export interface Insight {
   colors?: string[];
 }
 
+export interface PopulationData {
+  id?: number;
+  year: number;
+  population: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface BookingRequest {
   duration: number;
   startTime: string;
@@ -50,7 +57,7 @@ export interface BookingResponse {
 
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${API_BASE_URL}/api${endpoint}`;
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -64,6 +71,35 @@ class ApiService {
     }
 
     return response.json();
+  }
+
+  // Population data methods
+  async getPopulationData(): Promise<PopulationData[]> {
+    return this.request<PopulationData[]>('/population');
+  }
+
+  async getPopulationByYear(year: number): Promise<PopulationData> {
+    return this.request<PopulationData>(`/population/${year}`);
+  }
+
+  async createPopulationData(data: Omit<PopulationData, 'id' | 'created_at' | 'updated_at'>): Promise<PopulationData> {
+    return this.request<PopulationData>('/population', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePopulationData(year: number, data: Partial<PopulationData>): Promise<PopulationData> {
+    return this.request<PopulationData>(`/population/${year}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePopulationData(year: number): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/population/${year}`, {
+      method: 'DELETE',
+    });
   }
 
   // Get all parking spots

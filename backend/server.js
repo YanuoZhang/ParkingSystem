@@ -2,10 +2,29 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const { Client } = require('pg');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+
+// Supabase 数据库连接
+const client = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+// 连接数据库
+client.connect()
+  .then(() => {
+    console.log('✅ Connected to Supabase database');
+  })
+  .catch(err => {
+    console.error('❌ Database connection failed:', err.message);
+    process.exit(1);
+  });
 
 // Middleware
 app.use(cors());
@@ -29,6 +48,87 @@ const parkingInsights = loadData('insights.json');
 // Routes
 app.get('/', (req, res) => {
   res.json({ message: 'Melbourne Parking API is running!' });
+});
+
+// Population 数据相关路由
+app.get('/api/population', async (req, res) => {
+  try {
+    const result = await client.query('SELECT * FROM melbourne_population ORDER BY year');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching population data:', error);
+    res.status(500).json({ message: 'Error fetching population data' });
+  }
+});
+
+app.get('/api/population/:year', async (req, res) => {
+  try {
+    const { year } = req.params;
+    
+    const result = await client.query('SELECT * FROM melbourne_population WHERE year = $1', [year]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Population data not found for this year' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching population data by year:', error);
+    res.status(500).json({ message: 'Error fetching population data' });
+  }
+});
+
+app.post('/api/population', async (req, res) => {
+  try {
+    const { year, population } = req.body;
+    
+    const result = await client.query(
+      'INSERT INTO melbourne_population (year, population) VALUES ($1, $2) RETURNING *',
+      [year, population]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating population data:', error);
+    res.status(500).json({ message: 'Error creating population data' });
+  }
+});
+
+app.put('/api/population/:year', async (req, res) => {
+  try {
+    const { year } = req.params;
+    const { population } = req.body;
+    
+    const result = await client.query(
+      'UPDATE melbourne_population SET population = $1 WHERE year = $2 RETURNING *',
+      [population, year]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Population data not found for this year' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating population data:', error);
+    res.status(500).json({ message: 'Error updating population data' });
+  }
+});
+
+app.delete('/api/population/:year', async (req, res) => {
+  try {
+    const { year } = req.params;
+    
+    const result = await client.query('DELETE FROM melbourne_population WHERE year = $1 RETURNING *', [year]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Population data not found for this year' });
+    }
+    
+    res.json({ message: 'Population data deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting population data:', error);
+    res.status(500).json({ message: 'Error deleting population data' });
+  }
 });
 
 // Get all parking spots
