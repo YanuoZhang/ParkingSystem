@@ -27,7 +27,11 @@ client.connect()
   });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'https://parking-system-topaz.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+}));
 app.use(express.json());
 
 // Load mock data from JSON files
