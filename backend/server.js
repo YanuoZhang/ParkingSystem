@@ -7,10 +7,14 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+const env = process.env.NODE_ENV || 'development';
+
+const dbUrl = env === 'production' ? process.env.DATABASE_URL_PROD : process.env.DATABASE_URL_DEV;
+
 
 // Supabase 数据库连接
 const client = new Client({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: dbUrl,
   ssl: {
     rejectUnauthorized: false
   }
